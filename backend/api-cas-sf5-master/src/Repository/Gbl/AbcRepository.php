@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Repository\Gbl;
+
+use App\Entity\Gbl\Abc;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Abc>
+ */
+class AbcRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Abc::class);
+    }
+}

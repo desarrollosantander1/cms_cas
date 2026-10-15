@@ -1,0 +1,49 @@
+{% extends 'generador_cartas/pdf/_base.html.twig' %}
+{% import 'generador_cartas/pdf/_macros.html.twig' as m %}
+
+{% block contenido %}
+    {% set conInteres = estadoCuentaInteres == 1 %}
+
+    <p class="parrafo">Pereira, {{ m.fechaLarga(date()) }}</p>
+
+    <p class="parrafo destinatario" style="margin-top: 18px;">
+        Señor (a)<br>
+        <b>{{ cliente.RAZON_SOCIAL }}</b><br>
+        <b>NIT: {{ cliente.NUMERO_IDENTIDAD }}</b><br>
+        <b>CIUDAD: {{ cliente.CIUDAD }} - {{ cliente.DEPARTAMENTO }}</b><br>
+        <small><b>{{ cliente.DIRECCION }}</b></small>
+    </p>
+
+    <p class="parrafo" style="margin-top: 10px;">{{ textos.asunto|raw }}</p>
+    <p class="parrafo">{{ textos.referencia|raw }}</p>
+
+    <p class="parrafo">{{ textos.saludo|raw }}</p>
+
+    <p class="parrafo">{{ textos.intro|raw }}</p>
+
+    <table class="facturas">
+        <thead>
+            <tr>
+                <th>FACTURA</th><th>FECHA</th><th>F VENCE</th><th>V INICIAL</th>
+                <th>CARTERA</th><th>DIAS MORA</th>
+                {% if conInteres %}<th>INTERES</th>{% endif %}
+                <th>TOTAL A PAGAR</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for factura in facturasSelect %}
+                {{ m.filaFactura(factura, conInteres) }}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p class="parrafo total-letras">Valor total: {{ sumatoriaCarteraTexto }} (${{ sumatoriaCarteraNumber }})</p>
+
+    <p class="parrafo">{{ textos.parrafoPlazoLegal|raw }}</p>
+
+    <p class="parrafo">{{ textos.cuentasBancarias|raw }}</p>
+
+    <p class="parrafo">{{ textos.parrafoPago|raw }}</p>
+
+    <p class="parrafo">{{ textos.despedida|raw }}</p>
+{% endblock %}

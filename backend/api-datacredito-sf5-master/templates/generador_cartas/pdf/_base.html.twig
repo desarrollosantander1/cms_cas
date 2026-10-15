@@ -1,0 +1,72 @@
+{#
+  Base común de las cartas jurídicas (data_credito / prejuridico).
+  Renderizado con mPDF: el encabezado (logos) y el pie (direcciones + nº de
+  página) se declaran una sola vez como htmlpageheader/htmlpagefooter y mPDF
+  los repite en cada página automáticamente — no hace falta el bucle manual
+  de paginación que traía el legacy (que además dependía de flexbox).
+
+  `assetsDir` lo inyecta CartaPdfService: ruta absoluta en disco a
+  public/generador-cartas (mPDF lee las imágenes por ruta de sistema).
+#}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+    @page {
+        margin: 40mm 18mm 26mm 18mm;
+        header: html_encabezado;
+        footer: html_pie;
+    }
+    body { font-family: Arial, sans-serif; font-size: 10.5pt; color: #000; line-height: 1.45; }
+    p { margin: 6px 0; }
+    .parrafo { text-align: justify; }
+    .destinatario b { display: inline; }
+    table.facturas { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    table.facturas th, table.facturas td {
+        border: 1px solid #000; padding: 4px 3px; font-size: 8pt; text-align: center;
+    }
+    table.facturas th { background-color: #f2f2f2; font-weight: bold; }
+    table.facturas td.num { text-align: right; }
+    .total-letras { font-weight: bold; margin-top: 4px; }
+    .firma { height: 62px; }
+    .doc-control { text-align: right; margin: 0; font-size: 7.5pt; }
+    .header-tabla { width: 100%; }
+    .header-tabla td { vertical-align: middle; }
+    .pie {
+        text-align: center; font-size: 7.5pt; color: #1e6b96;
+        border-top: 0.5pt solid #1e6b96; padding-top: 3px;
+    }
+</style>
+</head>
+<body>
+
+<htmlpageheader name="encabezado">
+    <table class="header-tabla"><tr>
+        <td style="text-align: left;"><img src="{{ assetsDir }}/logo2.jpg" width="235"></td>
+        <td style="text-align: right;"><img src="{{ assetsDir }}/logo4.png" width="105"></td>
+    </tr></table>
+</htmlpageheader>
+
+<htmlpagefooter name="pie">
+    <div class="pie">
+        Calle 97 A # 9-45 oficina 204 Bogotá D.C. &nbsp;&bull;&nbsp;
+        CEDI PEREIRA Av. Santander No. 11E-175 Kennedy - PBX: (606) 3400402 &nbsp;&bull;&nbsp;
+        Línea de Atención al Cliente 311-7644-728<br>
+        Página {PAGENO} de {nbpg}
+    </div>
+</htmlpagefooter>
+
+{% block contenido %}{% endblock %}
+
+<div style="page-break-inside: avoid; margin-top: 14px;">
+    <img class="firma" src="{{ assetsDir }}/firma.png">
+    <p style="margin:0;"><strong>MARTHA CECILIA GARCIA M.</strong></p>
+    <p style="margin:0;">Líder de cartera</p>
+    <p class="doc-control" style="margin-top:8px;">Form-Ghum-0060</p>
+    <p class="doc-control">Versión 6 - Fecha de aprobación: 15/12/2023</p>
+    <p class="doc-control">DOCUMENTO CONTROLADO</p>
+</div>
+
+</body>
+</html>

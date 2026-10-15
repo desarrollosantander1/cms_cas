@@ -1,0 +1,143 @@
+{#
+  PDF de "Solicitud de Reparación" adjunto al correo que se envía al cliente al crear una orden
+  (ver OrdenMailerService/OrdenPdfService). Adaptado de
+  .scratch/cas/email-orden/centro_servicios_pdf.html.twig: mismos campos, pero reescrito a tabla
+  plana (sin bootstrap/flexbox — no soportado por mPDF, mismo motivo que
+  API datacredito sf4-1/templates/generador_cartas/pdf/_base.html.twig) y a las entidades reales
+  de este microservicio (Orden/Cas/CasCliente/Producto) en vez del "CentroServicio" denormalizado
+  del legacy.
+
+  `assetsDir` lo inyecta OrdenPdfService: ruta absoluta en disco a public/orden-pdf (mPDF lee las
+  imágenes por ruta de sistema, no por URL).
+
+  `diagnostico`/`reporteFinal` quedan casi siempre vacíos: se habilitan después de creada la
+  orden (ver Version20261012192602) — este correo se envía justo al crearla.
+
+  Encabezado (con datos del CAS) y pie de página (con numeración) quedaron de la versión
+  "mejorada"; el cuerpo volvió al formato original de tablas planas a pedido del usuario.
+#}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+    @page {
+        margin: 30mm 15mm 16mm 15mm;
+        header: html_encabezado;
+        footer: html_pie;
+    }
+    body { font-family: Arial, sans-serif; font-size: 9pt; color: #222; }
+
+    /* --- Encabezado --- */
+    .encabezado-tabla { width: 100%; }
+    .encabezado-tabla td { vertical-align: middle; }
+    .cas-info { text-align: right; font-size: 7.5pt; color: #43525c; line-height: 1.3; }
+    .cas-info .cas-nombre { font-size: 9pt; font-weight: bold; color: #0d4f66; }
+    .encabezado-regla { border-top: 1.5pt solid #0d4f66; margin-top: 3px; }
+
+    /* --- Cuerpo (formato original) --- */
+    table.campos { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+    table.campos td { padding: 2px 4px; vertical-align: top; }
+    .label { font-weight: bold; }
+    .titulo { font-size: 12pt; font-weight: bold; }
+    .subtitulo { font-size: 7.5pt; font-weight: normal; color: #666; margin-top: 2px; }
+    /* Comprobante-número en blanco: invisible a simple vista, pero seleccionable/copiable (ej. para
+       pegarlo en un buscador interno) — se "revela" solo al resaltarlo con el mouse. */
+    .comprobante-oculto { color: #fff; font-size: 7.5pt; font-weight: normal; }
+    .numero-orden { text-align: right; font-size: 10pt; font-weight: bold; }
+    .seccion-label { font-weight: bold; margin: 6px 0 2px; }
+    .caja { border: 1px solid #999; padding: 5px; min-height: 20px; }
+    .pie-legal { font-size: 7pt; color: #555; margin-top: 12px; text-align: justify; }
+
+    /* --- Pie de página --- */
+    .pie {
+        text-align: center; font-size: 7pt; color: #0d4f66;
+        border-top: 0.5pt solid #0d4f66; padding-top: 3px;
+    }
+</style>
+</head>
+<body>
+
+<htmlpageheader name="encabezado">
+    <table class="encabezado-tabla">
+        <tr>
+            <td style="width: 55%;"><img src="{{ assetsDir }}/logo2.jpg" width="150"></td>
+            <td class="cas-info" style="width: 45%;">
+                <div class="cas-nombre">CAS {{ orden.cas.id }} — {{ orden.cas.nombreMostrar() }}</div>
+                {% if orden.cas.nitMostrar() %}<div>NIT {{ orden.cas.nitMostrar() }}</div>{% endif %}
+                {% if orden.cas.direccionMostrar() %}<div>{{ orden.cas.direccionMostrar() }}</div>{% endif %}
+                {% if orden.cas.telefonoMostrar() %}<div>Tel. {{ orden.cas.telefonoMostrar() }}</div>{% endif %}
+            </td>
+        </tr>
+    </table>
+    <div class="encabezado-regla"></div>
+</htmlpageheader>
+
+<htmlpagefooter name="pie">
+    <div class="pie">
+        Centro Autorizado de Servicio Home Elements &nbsp;&bull;&nbsp; Línea de Atención (601) 390 6947<br>
+        Página {PAGENO} de {nbpg}
+    </div>
+</htmlpagefooter>
+
+<table class="campos">
+    <tr>
+        <td class="titulo" style="width: 70%;">
+            SOLICITUD DE REPARACIÓN
+            <span class="comprobante-oculto">{{ orden.comprobante }}-{{ orden.numero }}</span>
+            <div class="subtitulo">Generada el {{ orden.creadoEn|date('d/m/Y h:i A') }}</div>
+        </td>
+        <td class="numero-orden" style="width: 30%;">N° ORDEN: {{ orden.id }}</td>
+    </tr>
+</table>
+
+<table class="campos">
+    <tr>
+        <td class="label" style="width: 20%;">PRODUCTO:</td>
+        <td>{{ orden.producto.item }} — {{ orden.producto.descripcion }}</td>
+    </tr>
+</table>
+
+<table class="campos">
+    <tr>
+        <td class="label" style="width: 20%;">CÉDULA CLIENTE:</td>
+        <td style="width: 30%;">{{ orden.casCliente.numeroIdentidad }}</td>
+        <td class="label" style="width: 20%;">NOMBRE CLIENTE:</td>
+        <td>{{ orden.casCliente.nombre }} {{ orden.casCliente.apellido }}</td>
+    </tr>
+    <tr>
+        <td class="label">TELÉFONO CLIENTE:</td>
+        <td>{{ orden.casCliente.telefono }}</td>
+        <td class="label">CORREO CLIENTE:</td>
+        <td>{{ orden.casCliente.correo }}</td>
+    </tr>
+    <tr>
+        <td class="label">FECHA FACTURA:</td>
+        <td>{{ orden.fechaFactura|date('d/m/Y') }}</td>
+        <td class="label">N° FACTURA:</td>
+        <td>{{ orden.numeroFactura }}</td>
+    </tr>
+    <tr>
+        <td class="label">LUGAR DE COMPRA:</td>
+        <td colspan="3">{{ orden.descripcionCompra }}</td>
+    </tr>
+</table>
+
+<div class="seccion-label">REPORTE DEL CLIENTE:</div>
+<div class="caja">{{ orden.reporteCliente }}</div>
+
+<div class="seccion-label">DIAGNÓSTICO DEL PRODUCTO:</div>
+<div class="caja">{{ orden.diagnostico }}</div>
+
+<div class="seccion-label">REPORTE FINAL:</div>
+<div class="caja">{{ orden.reporteFinal }}</div>
+
+<p class="pie-legal">
+    * Visite el siguiente link https://www.homeelementsweb.com/privacidad para conocer
+    nuestra Política de tratamiento de datos personales; si no está de acuerdo con esta política,
+    por favor infórmelo a la línea 01800011602
+</p>
+<img style="position: absolute; right: 1px;" src="https://heos.homeelementsweb.com/images/qr_personal_data.png" alt="QR" width="80" height="80" />
+
+</body>
+</html>

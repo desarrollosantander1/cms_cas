@@ -1,0 +1,9 @@
+// El tema define --v-border-opacity: 1 (pensado para bordes sólidos), pero
+// VSkeletonLoader reutiliza esa misma variable para el color del "hueso",
+// lo que lo deja completamente opaco (negro en claro, blanco en oscuro) en
+// vez del gris translúcido esperado. Se fija la opacidad del hueso aquí sin
+// tocar --v-border-opacity, que sí es correcta para los bordes del resto de
+// la app.
+.v-skeleton-loader__bone {
+    background: rgba(var(--v-theme-on-surface), 0.12) !important;
+}

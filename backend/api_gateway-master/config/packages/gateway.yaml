@@ -1,0 +1,34 @@
+parameters:
+    # Tabla de enrutamiento: cada entrada define un prefijo público del gateway
+    # y el servicio interno al que se debe reenviar la petición.
+    # El orden importa: se evalúan de arriba hacia abajo y gana la primera coincidencia.
+    #
+    # - prefix:        prefijo de la URL pública, ej. /api/users
+    # - target:        URL base del microservicio interno
+    # - strip_prefix:  si es true, se elimina el prefijo antes de reenviar
+    #                   (ej. /api/users/42 -> /42 en el microservicio)
+    gateway.routes:
+        - { prefix: '/api/auth',              target: '%env(AUTH_SERVICE_URL)%',        strip_prefix: true }
+        - { prefix: '/api/users',             target: '%env(USERS_SERVICE_URL)%',       strip_prefix: true }
+        - { prefix: '/api/cartera/datacredito', target: '%env(DATACREDITO_SERVICE_URL)%', strip_prefix: true }
+        # strip_prefix: false — GeneradorCartasController (mismo microservicio
+        # datacredito) declara sus rutas con el prefijo público completo
+        # (#[Route('/api/cartera/generador-cartas')]), a diferencia del resto
+        # de controladores de datacredito que reciben el path ya recortado.
+        - { prefix: '/api/cartera/generador-cartas', target: '%env(DATACREDITO_SERVICE_URL)%', strip_prefix: false }
+        - { prefix: '/api/cas',               target: '%env(CAS_SERVICE_URL)%',         strip_prefix: true }
+        - { prefix: '/api/orders',            target: '%env(ORDERS_SERVICE_URL)%',      strip_prefix: true }
+        - { prefix: '/api/products',          target: '%env(PRODUCTS_SERVICE_URL)%',    strip_prefix: true }
+
+    # Cabeceras salto a salto que nunca deben reenviarse (RFC 7230 sección 6.1)
+    gateway.hop_by_hop_headers:
+        - 'connection'
+        - 'keep-alive'
+        - 'proxy-authenticate'
+        - 'proxy-authorization'
+        - 'te'
+        - 'trailer'
+        - 'transfer-encoding'
+        - 'upgrade'
+        - 'host'
+        - 'content-length'

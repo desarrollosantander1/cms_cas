@@ -1,0 +1,21 @@
+{% macro fechaLarga(fecha) %}
+{%- set meses = {
+    'January':'Enero','February':'Febrero','March':'Marzo','April':'Abril',
+    'May':'Mayo','June':'Junio','July':'Julio','August':'Agosto',
+    'September':'Septiembre','October':'Octubre','November':'Noviembre','December':'Diciembre'
+} -%}
+{{- fecha|date('d') }} de {{ meses[fecha|date('F')] }} de {{ fecha|date('Y') -}}
+{% endmacro %}
+
+{% macro filaFactura(factura, conInteres) %}
+    <tr>
+        <td>{{ factura.COMPROBANTE }}</td>
+        <td class="num">{{ factura.FECHA_FACTURA }}</td>
+        <td class="num">{{ factura.FECHA_VENCIMIENTO }}</td>
+        <td class="num">$ {{ factura.VALOR_INICIAL|number_format(0, ',', '.') }}</td>
+        <td class="num">$ {{ factura.SALDO|number_format(0, ',', '.') }}</td>
+        <td class="num">{{ factura.DIAS_MORA }}</td>
+        {% if conInteres %}<td class="num">$ {{ factura.INTERES|number_format(0, ',', '.') }}</td>{% endif %}
+        <td class="num">$ {{ factura.TOTAL_A_PAGAR|number_format(0, ',', '.') }}</td>
+    </tr>
+{% endmacro %}

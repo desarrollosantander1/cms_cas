@@ -1,0 +1,83 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+
+        # IMPORTANT: You MUST configure your server version,
+        # either here or in the DATABASE_URL env var (see .env file)
+        #server_version: '16'
+
+        profiling_collect_backtrace: false
+        use_savepoints: true
+        # Este servicio SOLO migra su propio esquema `cas.*`. Las entidades
+        # sobre `gbl.*` (Entity/Gbl/) son espejos de otro servicio que posee
+        # y migra esas tablas:
+        #   - usuario/role_permiso/usuario_role_permiso -> API users/auth
+        #     (Usuario y UsuarioRolePermiso son lectura/escritura aquí: CAS
+        #     crea usuarios nuevos por documento y les asigna ROLE_CAS, pero
+        #     nunca migra el esquema de esas tablas)
+        #   - cliente/cliente_sucursal/pais* -> API datacredito (mirror)
+        # El filtro solo admite `cas.*` y la tabla de bookkeeping de
+        # migraciones (`doctrine_migration_versions`, compartida con
+        # auth/users/datacredito). Las tablas nuevas de catálogo de producto
+        # en `gbl.*` (producto, marca, linea, etc., ver migrations/) se crean
+        # con `addSql` crudo en una migración de esta app, no vía mapping de
+        # Doctrine — por eso no hace falta admitirlas aquí tampoco, aunque sí
+        # tengan entidad Doctrine completa (Entity/Gbl/Producto.php y las
+        # demás del catálogo): el filtro solo gobierna qué gestiona
+        # `migrations:diff`, no qué se puede mapear/leer/escribir.
+        #
+        # `doctrine:migrations:diff` y el phantom-drop de cas.orden.producto_id:
+        # `Orden::$producto` y `OrdenDetalle::$producto` ya son relación
+        # `#[ORM\ManyToOne]` hacia `Gbl\Producto` (la FK real ya existía desde
+        # Version20260912120100, así que no hizo falta tocar el esquema).
+        # Cualquier `migrations:diff` sobre `cas.*` seguirá proponiendo el
+        # rename de esos índices/constraints a la convención de Doctrine
+        # (mismo patrón que el resto de FK de `gbl.*` mapeadas después de
+        # crearse con SQL crudo): generar el diff, inspeccionarlo y borrar el
+        # archivo generado sin aplicarlo — nunca ejecutarlo contra la base
+        # real.
+        schema_filter: '~^(cas\.|(gbl\.)?doctrine_migration_versions)~'
+    orm:
+        auto_generate_proxy_classes: true
+        enable_lazy_ghost_objects: true
+        report_fields_where_declared: true
+        validate_xml_mapping: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        identity_generation_preferences:
+            Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
+        auto_mapping: true
+        mappings:
+            App:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity'
+                prefix: 'App\Entity'
+                alias: App
+        controller_resolver:
+            auto_mapping: false
+
+when@test:
+    doctrine:
+        dbal:
+            # "TEST_TOKEN" is typically set by ParaTest
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@prod:
+    doctrine:
+        orm:
+            auto_generate_proxy_classes: false
+            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

@@ -1,0 +1,16 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+# Catch-all: cualquier ruta no capturada arriba (p.ej. /health) se reenvía
+# al microservicio correspondiente según config/packages/gateway.yaml
+gateway_catch_all:
+    path: '/{path}'
+    controller: App\Controller\GatewayController::proxy
+    requirements:
+        path: '.*'
+    defaults:
+        path: ''
+    methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD]

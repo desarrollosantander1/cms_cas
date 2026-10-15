@@ -1,0 +1,80 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+
+        # IMPORTANT: You MUST configure your server version,
+        # either here or in the DATABASE_URL env var (see .env file)
+        #server_version: '16'
+
+        # false a propósito: en debug capturaba un backtrace completo por
+        # cada query SQL — caro y no lo usamos. El profiler de Doctrine
+        # sigue registrando las queries, solo sin el backtrace.
+        profiling_collect_backtrace: false
+        use_savepoints: true
+        # Este servicio SOLO migra su propio esquema `datacredito.*`. Todas
+        # las entidades sobre `gbl.*` (Entity/Gbl/) son espejos de solo
+        # lectura de tablas que otro servicio posee y migra:
+        #   - usuario/role_permiso/menu/empleado -> API users/auth
+        #   - cliente/factura/cliente_sucursal/pais*/cliente_tipo*/forma_pago
+        #     -> API sync netsuite-heos5 (la ingesta NetSuite se extrajo de
+        #     aquí; ver plan ethereal-finding-gray).
+        # El filtro solo admite `datacredito.*` y la tabla de bookkeeping de
+        # migraciones (`doctrine_migration_versions`, compartida con
+        # auth/users/sync — ver doctrine_migrations.yaml). Sin admitirla,
+        # TableMetadataStorage::ensureInitialized() la da por inexistente y
+        # truena con "ya existe" al recrearla. Como `gbl` es el primer
+        # esquema del search_path del rol (ver docker/postgres/initdb/
+        # 01-restore.sh), DBAL la introspecta sin prefijo -> se admite en
+        # ambas formas.
+        # Las FK `reporte_factura`/`reclasificacion` -> `gbl.factura`/`gbl.cliente`
+        # NO generan phantom-drop: son asociaciones Doctrine mapeadas
+        # (#[ManyToOne]), no columnas int crudas, así que el comparador sabe
+        # que deben existir aunque el target esté fuera del filtro. El único
+        # phantom-drop de `migrations:diff` sigue siendo el de las 5 FK crudas
+        # a `gbl.empleado` (periodo_cierre/plano_generado/reclasificacion/
+        # reporte_factura/tasa_interes) — borrar el archivo generado, nunca aplicarlo.
+        schema_filter: '~^(datacredito\.|(gbl\.)?doctrine_migration_versions)~'
+    orm:
+        auto_generate_proxy_classes: true
+        enable_lazy_ghost_objects: true
+        report_fields_where_declared: true
+        validate_xml_mapping: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        identity_generation_preferences:
+            Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
+        auto_mapping: true
+        mappings:
+            App:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity'
+                prefix: 'App\Entity'
+                alias: App
+        controller_resolver:
+            auto_mapping: false
+
+when@test:
+    doctrine:
+        dbal:
+            # "TEST_TOKEN" is typically set by ParaTest
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@prod:
+    doctrine:
+        orm:
+            auto_generate_proxy_classes: false
+            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

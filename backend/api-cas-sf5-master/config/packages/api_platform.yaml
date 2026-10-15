@@ -1,0 +1,9 @@
+api_platform:
+    title: API Cas sf5
+    description: Documentación de los endpoints reales del microservicio (no expone entidades como recursos CRUD).
+    version: 1.0.0
+    enable_swagger_ui: true
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']

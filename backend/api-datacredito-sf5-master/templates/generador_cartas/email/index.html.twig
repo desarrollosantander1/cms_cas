@@ -1,0 +1,43 @@
+{#
+  Cuerpo del correo que acompaña a la carta jurídica (el PDF va adjunto).
+  Portado y simplificado del email/index.html.twig del legacy: se quitaron
+  las imágenes de CDNs externos (que devolvían 404) y se embebe el logo por
+  cid: — CartaMailerService lo adjunta como "logo".
+#}
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#eff2f7;font-family:Arial,Helvetica,sans-serif;color:#1f2933;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#eff2f7;padding:24px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:8px;overflow:hidden;">
+                    <tr>
+                        <td style="padding:24px 32px;border-bottom:3px solid #123153;">
+                            <img src="cid:logo" alt="Comercializadora Santander S.A.S" width="230" style="display:block;border:0;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:32px;">
+                            <h1 style="margin:0 0 16px;font-size:20px;color:#123153;">{{ title }}</h1>
+                            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{{ mensaje | raw }}</p>
+                            <p style="margin:0;font-size:15px;line-height:1.6;">
+                                Adjunto encontrará el documento <strong>{{ asunto }}</strong>.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:20px 32px;background-color:#f4f6f8;">
+                            <p style="margin:0;font-size:11px;line-height:1.5;color:#8492a6;">
+                                El contenido de este mensaje de correo electrónico y de sus anexos está destinado
+                                exclusivamente a su(s) destinatario(s) y puede contener información confidencial y/o
+                                privilegiada, por lo que su divulgación puede estar legalmente protegida.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
